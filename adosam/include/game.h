@@ -10,10 +10,22 @@
 class Game {
 public:
     
+    /**
+     * @brief Construit un nouveau Game. Initialise les booléens nécessaires 
+     * pour la boucle du jeu.
+     * 
+     */
     Game();
 
     ~Game();
 
+    /**
+     * @brief Procédure contenant la boucle principale. Gère les inputs clavier 
+     * et sourie.
+     * Tant que le joueur est dans un niveau, on met a jour le niveau 
+     * et l'affichage.
+     * 
+     */
     void Run();
 
     uint GetFramerate();
