@@ -1,11 +1,11 @@
 #include "conductor.h"
 
 Conductor::Conductor(const float& music_bpm, const float& first_beat_offset, 
-                     const string& level_folder_path) : 
-        music_(nullptr), sound_effect_(nullptr), 
+                     const string& level_folder_path) :  
+        bpm_(music_bpm),
         first_beat_offset_(first_beat_offset), 
         level_folder_path_(level_folder_path), 
-        bpm_(music_bpm)
+        music_(nullptr), sound_effect_(nullptr)
 
 {
 

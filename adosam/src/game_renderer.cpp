@@ -99,7 +99,7 @@ GameRenderer::GameRenderer() :
 
     InitMenu();
 
-    InitLevel();
+    InitLevel(); // à déplacer quand plusieurs niveaux
 
 }
 
@@ -148,7 +148,6 @@ GameRenderer::~GameRenderer(){
     SDL_Quit();
 
 }
-
 
 void GameRenderer::IfKeyDown(){
 

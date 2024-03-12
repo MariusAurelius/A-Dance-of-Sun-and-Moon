@@ -38,10 +38,6 @@ public:
 
     void Pause();
 
-    /**
-     * @brief Met à jour 
-     * 
-     */
     void Update();
 
     float GetBpm() const;
