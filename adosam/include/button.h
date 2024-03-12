@@ -17,6 +17,14 @@ public:
     
     ~Button();
 
+    /**
+    * @brief fonction renvoyant vrai si le bouton a été cliqué en vérifiant que 
+    * ses coordonnées sont bien dans la fenetre.
+    * 
+    * @param event evenement SDL
+    * @return true 
+    * @return false 
+    */
     bool CheckIfClicked(const SDL_Event& event);
     
 };

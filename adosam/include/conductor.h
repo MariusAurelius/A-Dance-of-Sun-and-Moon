@@ -18,8 +18,18 @@ public:
 
     ~Conductor();
 
+    /**
+    * @brief procédure qui initialise les chaines de son pour la musique et 
+    * les effets sonores.
+    * 
+    */
     void Load();
 
+    /**
+    * @brief procédure qui arrete de jouer tous les sons et libère les ressources 
+    * appropriées.
+    * 
+    */
     void Unload();
 
     void PlayMusic();
@@ -28,6 +38,10 @@ public:
 
     void Pause();
 
+    /**
+     * @brief Met à jour 
+     * 
+     */
     void Update();
 
     float GetBpm() const;
