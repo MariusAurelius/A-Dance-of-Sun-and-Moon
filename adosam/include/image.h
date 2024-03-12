@@ -8,18 +8,25 @@
 #include <memory>
 #include <string>
 
+using namespace std;
+
 class Image{
 public:
 
-    Image(SDL_Renderer* source_renderer, const std::string& file_path, const float& x_pos, const float& y_pos, const int& width, const int& height);
+    Image(const string& file_path, const float& x_pos, const float& y_pos, 
+          const int& width, const int& height);
 
     ~Image();
 
-    void Load();
+    void Load(SDL_Renderer* renderer);
 
     void Unload();
 
-    void Render();
+    void Render(SDL_Renderer* renderer);
+
+    void InitiateRectangle();
+
+    void UpdateRectangleCoordinates();
 
     float GetXPos() const;
 
@@ -35,12 +42,11 @@ public:
 
 private:
 
-    SDL_Renderer* renderer_;
     SDL_Surface* surface_;
     SDL_Texture* texture_;
     SDL_Rect* rectangle_;
 
-    std::string file_path_;
+    string file_path_;
 
     float x_pos_;
     float y_pos_;

@@ -8,13 +8,12 @@
 
 #include "image.h"
 
-const int TILE_WIDTH = 100, TILE_HEIGHT=80;
-
+const int TILE_WIDTH = 100, TILE_HEIGHT = 80;
 
 class Tile : public Image{
 public:
 
-    Tile(SDL_Renderer* source_renderer, const std::string& file_path, const float& x_pos, const float& y_pos, const int& width, const int& height, const std::string& tile_type);
+    Tile(const std::string& file_path, const float& x_pos, const float& y_pos, const int& width, const int& height, const std::string& tile_type);
 
     ~Tile ();
 
@@ -22,14 +21,17 @@ public:
 
     bool IsNextTileVertical(Tile* next_tile) const;
 
-    bool IsNextTileCorner(Tile* next_tile) const;
+    bool IsNextTileReverse(Tile* next_tile) const;
 
     void GetCenter(float& x_pos, float& y_pos) const;
 
 
 private:
 
-    enum Types_ { LEFT_HORIZONTAL, RIGHT_HORIZONTAL, LEFT_DOWN, LEFT_UP, RIGHT_DOWN, RIGHT_UP, DOWN_LEFT, UP_LEFT, DOWN_RIGHT, UP_RIGHT, DOWN_VERTICAL, UP_VERTICAL };
+    enum Types_ { LEFT_HORIZONTAL, RIGHT_HORIZONTAL, LEFT_DOWN, LEFT_UP, 
+                  RIGHT_DOWN, RIGHT_UP, DOWN_LEFT, UP_LEFT, DOWN_RIGHT, 
+                  UP_RIGHT, DOWN_VERTICAL, UP_VERTICAL, LEFT_SWIRL
+                };
 
     Types_ GetType(const std::string& type) const;
 

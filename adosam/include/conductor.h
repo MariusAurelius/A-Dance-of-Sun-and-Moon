@@ -7,11 +7,14 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
 
+using namespace std;
+
 
 class Conductor{
 public:
 
-    Conductor(const float& music_bpm, const float& first_beat_offset, const std::string& music_path);
+    Conductor(const float& music_bpm, const float& first_beat_offset, 
+              const string& music_path);
 
     ~Conductor();
 
@@ -36,12 +39,12 @@ private:
     Mix_Chunk* music_;
     Mix_Chunk* sound_effect_;
 
-    std::string level_folder_path_;
+    string level_folder_path_;
 
     Uint32 music_length_; 
     Uint32 start_time_;
 
-    float music_bpm_;
+    float bpm_;
     float seconds_per_beat_;
     double music_position_;
     float music_position_in_beats_;

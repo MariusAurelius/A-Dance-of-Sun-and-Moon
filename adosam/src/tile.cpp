@@ -1,27 +1,37 @@
 #include "tile.h"
 
+Tile::Tile(const std::string& file_path, 
+           const float& x_pos, const float& y_pos, 
+           const int& width, const int& height, 
+           const std::string& tile_type) :
+        Image(file_path,  x_pos,  y_pos,  width, height)
 
-Tile::Tile(SDL_Renderer* source_renderer, const std::string& file_path, const float& x_pos, const float& y_pos, const int& width, const int& height, const std::string& tile_type) 
-: Image(source_renderer, file_path,  x_pos,  y_pos,  width, height){
+{
 
     tile_type_ = GetType(tile_type);
+
 }
 
 Tile::~Tile(){
+
 }
 
 void Tile::GetCenter(float& x_pos, float& y_pos) const{
+
     if(tile_type_ == UP_VERTICAL || tile_type_ == DOWN_VERTICAL){
         x_pos = GetXPos() + GetWidth() / 4;
         y_pos = GetYPos() + GetHeight() / 2;
     }
+
     else{
         x_pos = GetXPos() + GetWidth() / 2;
         y_pos = GetYPos() + GetHeight() / 2;
     }
+
 }
 
 Tile::Types_ Tile::GetType(const std::string& type) const{
+    
     if (type == "left-horizontal") {
         return LEFT_HORIZONTAL;
     }
@@ -65,26 +75,39 @@ Tile::Types_ Tile::GetType(const std::string& type) const{
     if (type == "down-left") {
         return DOWN_LEFT;
     }
-    
+    if (type == "left-swirl"){
+        return LEFT_SWIRL;
+    }
     return UP_VERTICAL;
+
 }
 
 bool Tile::IsNextTileVertical(Tile* next_tile) const{
-    if(next_tile -> tile_type_ == UP_VERTICAL || next_tile -> tile_type_ == DOWN_VERTICAL){
+
+    if(next_tile -> tile_type_ == UP_VERTICAL || 
+       next_tile -> tile_type_ == DOWN_VERTICAL){
+
         return true;
     }
+    
     return false;
+
 }
 
-bool Tile::IsNextTileCorner(Tile* next_tile) const{
-    if(next_tile -> tile_type_ == UP_VERTICAL || next_tile -> tile_type_ == DOWN_VERTICAL
-    || next_tile -> tile_type_ == LEFT_HORIZONTAL || next_tile -> tile_type_ == RIGHT_HORIZONTAL){
-        return false;
+bool Tile::IsNextTileReverse(Tile* next_tile) const{
+    
+    if(next_tile -> tile_type_ == LEFT_SWIRL){
+
+        return true;
+
     }
-    return true;
+
+    return false;
+
 }
 
 void Tile::DetermineNextTileCoordinates(const std::string& next_tile_type, float& next_tile_x_pos, float& next_tile_y_pos) const{
+
     Tile::Types_ next_type = GetType(next_tile_type);
 
     switch(tile_type_){
@@ -94,11 +117,27 @@ void Tile::DetermineNextTileCoordinates(const std::string& next_tile_type, float
                     next_tile_x_pos = GetXPos() + TILE_WIDTH;
                     next_tile_y_pos = GetYPos();
                     break;
+                case LEFT_SWIRL:
+                    next_tile_x_pos = GetXPos() + TILE_WIDTH;
+                    next_tile_y_pos = GetYPos();
+                    break;
                 case LEFT_DOWN:
                     next_tile_x_pos = GetXPos() + TILE_WIDTH;
                     next_tile_y_pos = GetYPos();
                     break;
                 case LEFT_UP:
+                    next_tile_x_pos = GetXPos() + TILE_WIDTH;
+                    next_tile_y_pos = GetYPos();
+                    break;
+                default:
+                    std::cerr << "Unknown next Tile Type: "<< next_tile_type << std::endl;
+                    break;
+            }
+            break;
+        
+        case LEFT_SWIRL:
+            switch(next_type){
+                case LEFT_HORIZONTAL:
                     next_tile_x_pos = GetXPos() + TILE_WIDTH;
                     next_tile_y_pos = GetYPos();
                     break;
@@ -155,8 +194,8 @@ void Tile::DetermineNextTileCoordinates(const std::string& next_tile_type, float
                     next_tile_y_pos = GetYPos() + TILE_HEIGHT;
                     break;
                 case UP_LEFT:
-                    next_tile_x_pos = GetXPos();
-                    next_tile_y_pos = GetYPos() - TILE_HEIGHT;
+                    next_tile_x_pos = GetXPos() - TILE_WIDTH / 2;
+                    next_tile_y_pos = GetYPos() + TILE_HEIGHT;
                     break;
                 case UP_RIGHT:
                     next_tile_x_pos = GetXPos();
@@ -222,6 +261,10 @@ void Tile::DetermineNextTileCoordinates(const std::string& next_tile_type, float
                     next_tile_x_pos = GetXPos() - TILE_WIDTH;
                     next_tile_y_pos = GetYPos() - TILE_HEIGHT/2;
                     break;
+                case LEFT_DOWN:
+                    next_tile_x_pos = GetXPos() - TILE_WIDTH;
+                    next_tile_y_pos = GetYPos();
+                    break;
                 default:
                     std::cerr << "Unknown next Tile Type: "<< next_tile_type << std::endl;
                     break;
@@ -256,7 +299,7 @@ void Tile::DetermineNextTileCoordinates(const std::string& next_tile_type, float
                     break;
                 case RIGHT_DOWN:
                     next_tile_x_pos = GetXPos() - TILE_WIDTH;
-                    next_tile_y_pos = GetYPos() + TILE_HEIGHT/2;
+                    next_tile_y_pos = GetYPos();
                     break;
                 case RIGHT_UP:
                     next_tile_x_pos = GetXPos() - TILE_WIDTH;

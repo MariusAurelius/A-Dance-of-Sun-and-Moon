@@ -8,14 +8,17 @@
 
 #include <deque>
 
+using namespace std;
+
 class Player {
 public:
 
-    Player(SDL_Renderer* renderer, SDL_DisplayMode* display_mode, const unsigned int& bpm);
+    Player(SDL_DisplayMode* display_mode, 
+           const unsigned int& bpm);
 
     ~Player();
 
-    void Render();
+    void Render(SDL_Renderer* renderer);
 
     void UpdateRotation();
 
@@ -27,15 +30,17 @@ public:
 
     void ChangeRotation();
 
+    void ReverseRotation();
+
     void NextPosition();
 
-    bool GetRotationState() const;
+    bool IsSunRotating() const;
 
     void MovePlayerToNextTile(const float& next_x_pos, const float& next_y_pos, const bool& is_next_tile_vertical);
 
-    float GetSunDistanceFromPoint(const float& x, const float& y);
+    float GetSunDistanceFromPoint(const float& x, const float& y) const;
 
-    float GetMoonDistanceFromPoint(const float& x, const float& y);
+    float GetMoonDistanceFromPoint(const float& x, const float& y) const;
 
     void Scroll();
 
@@ -43,8 +48,8 @@ private:
 
     SDL_DisplayMode* display_mode_;
 
-    std::unique_ptr<Image> sun_;
-    std::unique_ptr<Image> moon_;
+    unique_ptr<Image> sun_;
+    unique_ptr<Image> moon_;
 
     float rotation_speed_;
     bool is_sun_rotating_;

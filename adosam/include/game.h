@@ -7,9 +7,6 @@
 
 #include "game_renderer.h"
 
-const int FRAMERATE = 60;
-
-
 class Game {
 public:
     
@@ -28,6 +25,8 @@ private:
     GameRenderer* game_renderer_;
 
     bool is_running_;
+
+    bool is_in_game_;
 
 };
 

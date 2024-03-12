@@ -1,131 +1,311 @@
 #include "level.h"
 
-Level::Level(SDL_Renderer* renderer, const std::string& img_tile_path, const std::string& img_extension, const std::string& level_folder_path, SDL_DisplayMode* displaymode, const float& song_bpm, const float& first_beat_offset)
- : renderer_(renderer), displaymode_(displaymode){
+Level::Level(const string& tile_image_path, 
+             const string& img_extension, 
+             const string& level_folder_path, 
+             SDL_DisplayMode* displaymode, 
+             const float& song_bpm, 
+             const float& first_beat_offset) : 
+        displaymode_(displaymode), 
+        tile_image_path_(tile_image_path), image_extension_(img_extension)
+        
+{
 
-    img_tile_path_ = img_tile_path; 
-    img_extension_ = img_extension;
-    level_map_ = new Map(level_folder_path, song_bpm, first_beat_offset);
-    level_queue_ = new std::deque<Tile*>;
-    std::string file_path = img_tile_path_ + level_map_ -> GetQueueFront() + img_extension_;
-    level_queue_ -> push_front(new Tile(renderer_, file_path, (displaymode_ -> w/2) - TILE_WIDTH, (displaymode_ -> h/2) - TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT, level_map_ -> GetQueueFront()));
-    level_map_ -> PopQueueFront();
-    level_position_ = level_queue_ -> begin();
-    player_ = new Player(renderer_, displaymode_, level_map_ -> GetMusicBpm());
-    scroll_speed_ = 60 * level_map_ -> GetMusicSpb();
-    lives_ = 3;
-    score_ = 0;
+    Load(level_folder_path, song_bpm, first_beat_offset);
+
+    scroll_speed_ = FRAMERATE * map_->GetMusicSecondsPerBeat();
+    life_ = 3;
+
 }
 
 Level::~Level(){
-    delete level_map_;
+
+    delete map_;
     
-    for (Tile* tile : *level_queue_) {
+    for (Tile* tile : *displayed_tiles_) {
         delete tile;
     }
 
-    level_map_ = nullptr;
-    level_queue_ = nullptr;
+    map_ = nullptr;
+    displayed_tiles_ = nullptr;
+
+}
+
+void Level::Load(const string& level_folder_path, 
+                 const float& song_bpm, 
+                 const float& first_beat_offset)
+{
+
+    map_ = new Map(level_folder_path, song_bpm, first_beat_offset);
+
+    displayed_tiles_ = new deque<Tile*>;
+
+    string first_tile_type = map_->GetNextTileTypeToDisplay();
+
+    string first_tile_image_path = tile_image_path_ 
+                                 + first_tile_type 
+                                 + image_extension_;
+
+    Tile* first_tile = new Tile(first_tile_image_path, 
+                                (displaymode_->w/2) - TILE_WIDTH, 
+                                (displaymode_->h/2) - TILE_HEIGHT, 
+                                TILE_WIDTH, 
+                                TILE_HEIGHT, 
+                                first_tile_type);
+
+    AddTileToDisplay(first_tile);
+
+    level_position_ = displayed_tiles_->begin();
+
+    player_ = new Player(displaymode_, map_->GetMusicBpm());
+
+}
+
+void Level::LoadNewTiles(){
+
+    float new_tile_x_pos = 0, new_tile_y_pos = 0;
+
+    Tile* current_tile;
+    Tile* new_tile;
+
+    string new_tile_type;
+    
+    while(!map_->IsEmpty() /*&& 
+          IsNextTileInDisplay(*GetCurrentTile(), map_->GetNextTileTypeToDisplay())*/){ 
+
+        current_tile = GetCurrentTile();
+
+        new_tile_type = map_->GetNextTileTypeToDisplay();
+
+        current_tile->DetermineNextTileCoordinates(new_tile_type, 
+                                                   new_tile_x_pos, 
+                                                   new_tile_y_pos);
+
+        string new_tile_image_path = tile_image_path_ 
+                                   + new_tile_type 
+                                   + image_extension_;
+
+        new_tile = new Tile(new_tile_image_path, 
+                            new_tile_x_pos, 
+                            new_tile_y_pos, 
+                            TILE_WIDTH, 
+                            TILE_HEIGHT, 
+                            new_tile_type);
+
+        AddTileToDisplay(new_tile);
+
+    }
+
+}
+
+void Level::UnloadOutOfScreenTiles(){
+
+    Tile* oldest_displayed_tile = GetOldestDisplayedTile();
+
+    while (!displayed_tiles_->empty() && IsTileOutOfScreen(*oldest_displayed_tile)){
+
+        delete oldest_displayed_tile;
+        PopOldestDisplayedTile();
+
+    }
+
+}
+
+void Level::Render(SDL_Renderer* renderer) {
+     
+    for (Tile* tile : *displayed_tiles_) {
+        tile->Render(renderer);
+    }
+
+    player_->Render(renderer);
+
 }
 
 void Level::Start(){
-    level_map_ -> PlayMapMusic();
+
+    map_->PlayMusic();
+    score_ = 0;
+
 }
 
 void Level::Update(){
-    player_ -> UpdatePosition(x_diff_, y_diff_);
-    player_ -> UpdateRotation();
-    UpdateTilesPos();
-    level_map_ -> UpdateMapMusic();
-    
-    while(!level_map_ -> IsQueueEmpty() /*&& CheckIfInDisplay(*level_queue_->back(), level_map_->GetQueueFront())*/){
-        float x_pos, y_pos;
-        level_queue_ -> back() -> DetermineNextTileCoordinates(level_map_ -> GetQueueFront(), x_pos, y_pos);
-        std::string file_path = img_tile_path_ + level_map_->GetQueueFront() + img_extension_;
-        level_queue_ -> push_back(new Tile(renderer_, file_path, x_pos, y_pos, TILE_WIDTH, TILE_HEIGHT, level_map_->GetQueueFront()));
-        level_map_ -> PopQueueFront();
-    }
 
-    while(!level_queue_ -> empty() && CheckIfOutOfDisplay( *(level_queue_ -> front()) )){
-        delete level_queue_ -> front();
-        level_queue_ -> pop_front();
-    }
+    player_->UpdatePosition(scroll_x_diff_, scroll_y_diff_);
+    player_->UpdateRotation();
+
+    UpdateTilesPosition();
+
+    map_->UpdateMusic();
+
+    LoadNewTiles();
+
+    UnloadOutOfScreenTiles();
+
 }
 
+void Level::AddTileToDisplay(Tile* tile_to_add){
 
-bool Level::CheckIfOutOfDisplay(const Tile& tile) const{
+    map_->PopNewTile();
+    displayed_tiles_->push_back(tile_to_add);
 
-    if (tile.GetXPos() >= -TILE_WIDTH && tile.GetXPos() <= displaymode_ -> w && tile.GetYPos() >= -TILE_HEIGHT && tile.GetYPos() <= displaymode_ -> h) {
-        return false;
-    }
-    return true;
 }
 
-bool Level::CheckIfInDisplay(const Tile& current_tile, const std::string& next_tyle_type) const{
-    float x_pos, y_pos;
+void Level::UpdateTilesPosition(){
+
+    for (Tile* tile : *displayed_tiles_) {
+
+        tile -> SetXPos(tile->GetXPos() + scroll_x_diff_);
+        tile -> SetYPos(tile->GetYPos() + scroll_y_diff_);
+
+    }
+
+}
+
+bool Level::IsNextTileInDisplay(const Tile& current_tile, 
+                             const string& next_tyle_type) 
+{
+
+    float x_pos = 0, y_pos = 0;
+
     current_tile.DetermineNextTileCoordinates(next_tyle_type, x_pos, y_pos);
-    if (x_pos >= 0 && x_pos <= displaymode_->w && y_pos >= 0 && y_pos <= displaymode_->h) {
+
+    if (x_pos >= 0 && 
+        x_pos <= displaymode_->w && 
+        y_pos >= 0 && 
+        y_pos <= displaymode_->h) 
+    {
+
         return true;
+
     }
+
     return false;
+
 }
 
-void Level::Render() {
-    for (const auto& tile : *level_queue_) {
-        tile -> Render();
+bool Level::IsTileOutOfScreen(const Tile& tile) const{
+
+    if (tile.GetXPos() >= -2*TILE_WIDTH && 
+        tile.GetXPos() <= displaymode_->w && 
+        tile.GetYPos() >= -2*TILE_HEIGHT && 
+        tile.GetYPos() <= displaymode_ ->h) 
+    {
+
+        return false;
+
     }
 
-    player_ -> Render();
-    SDL_RenderPresent(renderer_);
+    return true;
+
+}
+
+Tile* Level::GetOldestDisplayedTile() const{
+
+    return displayed_tiles_->front();
+
+}
+
+Tile* Level::GetCurrentTile() const{
+
+    return displayed_tiles_->back();
+
+}
+
+void Level::PopOldestDisplayedTile(){
+
+    displayed_tiles_->pop_front();
+
 }
 
 void Level::PlayerGoNextTile(){
-    level_map_ -> PlayMapSoundEffect();
+
+    //PlaySoundEffect();
+
     Tile* current_tile = *level_position_;
     ++level_position_;
-    CheckAccuracy();
-    bool is_next_tile_vertical = current_tile -> IsNextTileVertical(*level_position_);
-    bool is_next_tile_corner = current_tile -> IsNextTileCorner(*level_position_);
-    player_ -> MovePlayerToNextTile( (*level_position_) -> GetXPos(), (*level_position_) -> GetYPos(), is_next_tile_vertical );
-    player_ -> ChangeRotation();
-    if(is_next_tile_corner){
-        x_diff_ = (current_tile -> GetXPos() - (*level_position_) -> GetXPos()) / (scroll_speed_);
-        y_diff_ = (current_tile -> GetYPos() - (*level_position_) -> GetYPos()) / (scroll_speed_ * 0.7);
+    Tile* next_tile = *level_position_;
+
+    CheckPlayerAccuracy();
+
+    bool is_next_tile_vertical = current_tile->IsNextTileVertical(next_tile);
+    bool is_next_tile_reverse = current_tile->IsNextTileReverse(next_tile);
+
+    player_->MovePlayerToNextTile(next_tile->GetXPos(), 
+                                  next_tile->GetYPos(), 
+                                  is_next_tile_vertical);
+
+    player_->ChangeRotation();
+
+    scroll_x_diff_ = (current_tile->GetXPos() - next_tile->GetXPos()) / scroll_speed_;
+    scroll_y_diff_ = (current_tile->GetYPos() - next_tile->GetYPos()) / scroll_speed_;
+
+    if(is_next_tile_reverse){
+        player_->ReverseRotation();
     }
-    else{
-        x_diff_ = (current_tile -> GetXPos() - (*level_position_) -> GetXPos()) / scroll_speed_;
-        y_diff_ = (current_tile -> GetYPos() - (*level_position_) -> GetYPos()) / scroll_speed_;
-    }
+
 }
 
-void Level::UpdateTilesPos(){
+void Level::CheckPlayerAccuracy(){
 
-    for (Tile* tile : *level_queue_) {
-        tile -> SetXPos(tile -> GetXPos() + x_diff_);
-        tile -> SetYPos(tile -> GetYPos() + y_diff_);
-    }
-}
-
-void Level::CheckAccuracy(){
     float next_tile_center_x, next_tile_center_y;
     float accuracy;
-    (*level_position_) -> GetCenter(next_tile_center_x, next_tile_center_y);
 
-    if(player_ -> GetRotationState()){
-        accuracy = player_ -> GetSunDistanceFromPoint(next_tile_center_x, next_tile_center_y);
+    (*level_position_)->GetCenter(next_tile_center_x, next_tile_center_y);
+
+    if(player_->IsSunRotating()){
+
+        accuracy = player_->GetSunDistanceFromPoint(next_tile_center_x, 
+                                                    next_tile_center_y);
+
     }
 
     else{
-        accuracy = player_ -> GetMoonDistanceFromPoint(next_tile_center_x, next_tile_center_y);
+
+        accuracy = player_->GetMoonDistanceFromPoint(next_tile_center_x, 
+                                                     next_tile_center_y);
+
     }
-    if(accuracy < 35){
-        score_ += (int) 35 - accuracy;
+    
+    if(accuracy < 50){
+
+        score_ += (int) 50 - accuracy;
+
     }
+
+    else if(accuracy > 80){
+
+        life_ = 0;
+
+    }
+
     else{
-        lives_ -= 1;
+
+        life_ -= 1;
+
     }
+
 }
 
 int Level::GetScore() const{
+
     return score_;
+
+}
+
+int Level::GetLife() const{
+
+    return life_;
+
+}
+
+void Level::PlaySoundEffect() {
+
+    map_->PlaySoundEffect();
+
+}
+
+float Level::GetMusicSecondsPerBeat() const{
+
+    return map_->GetMusicSecondsPerBeat();
+
 }

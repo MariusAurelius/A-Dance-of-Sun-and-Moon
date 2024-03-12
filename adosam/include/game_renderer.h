@@ -13,6 +13,9 @@
 #include "tile.h"
 #include "level.h"
 #include "button.h"
+#include "text.h"
+
+using namespace std;
 
 
 class GameRenderer{
@@ -24,15 +27,21 @@ public:
 
     void IfKeyDown();
 
-    bool IfMouseButtonDown(std::string button_name, SDL_Event event);
+    bool IfMouseButtonDown(const string& button_name, const SDL_Event& event);
 
-    void Update();
+    void InitMenu();
 
-    void Render();
+    void RenderMenu();
 
-    void Start();
+    void InitLevel();
 
-    SDL_Renderer* GetRenderer();
+    void UpdateLevel();
+
+    void RenderLevel();
+
+    void StartLevel();
+
+    void Countdown();
 
 private:
 
@@ -40,18 +49,23 @@ private:
     SDL_DisplayMode* displaymode_;
     SDL_Window* window_;
 
-    SDL_Texture* score_texture_;
-    SDL_Rect* score_rect_;
-    SDL_Surface* score_surface_;
     TTF_Font* font_;
 
-    Level* level_;
-    Image* menu_background_;
-    Image* background_;
-    Button* quit_;
+    Text* score_;
 
-    std::string img_tile_path_;
-    std::string img_extension_;
+    Text* life_;
+    Image* life_image_;
+
+    Level* level_;
+    Image* level_background_;
+
+    Image* menu_background_;
+    Button* play_button_;
+
+    Button* quit_button_;
+
+    string img_tile_path_;
+    string img_extension_;
     
 };
 

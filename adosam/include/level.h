@@ -8,50 +8,77 @@
 #include "player.h"
 #include <deque>
 
+using namespace std;
+
+const int FRAMERATE = 60;
+
 class Level{
 public:
 
-    Level(SDL_Renderer* renderer, const std::string& img_tile_path, const std::string& img_extension, const std::string& level_folder_path, SDL_DisplayMode* displaymode, const float& song_bpm, const float& first_beat_offset);
+    Level(const string& img_tile_path, 
+          const string& img_extension, const string& level_folder_path, 
+          SDL_DisplayMode* displaymode, const float& song_bpm, 
+          const float& first_beat_offset);
 
     ~Level();
 
-    void Render();
+    void Load(const string& level_folder_path, const float& song_bpm, 
+              const float& first_beat_offset);
 
-    bool CheckIfInDisplay(const Tile& current_tile, const std::string& next_tyle_type) const;
+    void LoadNewTiles();
 
-    bool CheckIfOutOfDisplay(const Tile& tile) const;
+    void UnloadOutOfScreenTiles();
 
-    void Update();
+    void Render(SDL_Renderer* renderer);
 
     void Start();
 
+    void Update();
+
+    void AddTileToDisplay(Tile* tile_to_add);
+
+    void UpdateTilesPosition();
+
+    bool IsNextTileInDisplay(const Tile& current_tile, const string& next_tyle_type);
+
+    bool IsTileOutOfScreen(const Tile& tile) const;
+
+    Tile* GetOldestDisplayedTile() const;
+
+    Tile* GetCurrentTile() const;
+
+    void PopOldestDisplayedTile();
+
     void PlayerGoNextTile();
 
-    void UpdateTilesPos();
-
-    void CheckAccuracy();
+    void CheckPlayerAccuracy();
 
     int GetScore() const;
 
+    int GetLife() const;
+
+    void PlaySoundEffect();
+
+    float GetMusicSecondsPerBeat() const;
+
 private:
 
-    SDL_Renderer* renderer_;
     SDL_DisplayMode* displaymode_;
 
-    Map* level_map_;
+    Map* map_;
     Player* player_;
 
-    std::deque<Tile*>* level_queue_;
-    std::deque<Tile*>::iterator level_position_;
+    deque<Tile*>* displayed_tiles_;
+    deque<Tile*>::iterator level_position_;
 
-    std::string img_tile_path_;
-    std::string img_extension_;
+    string tile_image_path_;
+    string image_extension_;
 
-    float x_diff_;
-    float y_diff_;
+    float scroll_x_diff_;
+    float scroll_y_diff_;
     float scroll_speed_;
     int score_;
-    int lives_;
+    int life_;
     //bool finished_;
     
 };

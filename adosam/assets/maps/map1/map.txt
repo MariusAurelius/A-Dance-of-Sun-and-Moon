@@ -28,7 +28,6 @@ left-horizontal
 left-horizontal
 left-horizontal
 left-horizontal
-left-horizontal
 left-down
 up-right
 left-horizontal
