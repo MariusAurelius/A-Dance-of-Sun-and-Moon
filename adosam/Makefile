@@ -29,6 +29,10 @@ $(EXECUTABLE): $(OBJS)
 bin/%.o: src/%.cpp
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
+# Rule for generating
+doc: doc/doxyfile
+	doxygen doc/doxyfile
+
 # Clean rule
 clean:
 	rm -f $(OBJS) $(EXECUTABLE)
